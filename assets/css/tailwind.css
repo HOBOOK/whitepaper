@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global font: NanumSquare (self-hosted) */
+@font-face{
+  font-family: 'NanumSquare';
+  font-style: normal;
+  font-weight: 300;
+  src: url('/fonts/nanum-square/NanumSquareL.ttf') format('truetype'),
+       url('/fonts/nanum-square/NanumSquareL.otf') format('opentype');
+  font-display: swap;
+}
+@font-face{
+  font-family: 'NanumSquare';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/nanum-square/NanumSquareR.ttf') format('truetype'),
+       url('/fonts/nanum-square/NanumSquareR.otf') format('opentype');
+  font-display: swap;
+}
+@font-face{
+  font-family: 'NanumSquare';
+  font-style: normal;
+  font-weight: 700;
+  src: url('/fonts/nanum-square/NanumSquareB.ttf') format('truetype'),
+       url('/fonts/nanum-square/NanumSquareB.otf') format('opentype');
+  font-display: swap;
+}
+@font-face{
+  font-family: 'NanumSquare';
+  font-style: normal;
+  font-weight: 800;
+  src: url('/fonts/nanum-square/NanumSquareEB.ttf') format('truetype'),
+       url('/fonts/nanum-square/NanumSquareEB.otf') format('opentype');
+  font-display: swap;
+}
+
+:root{ --bg: #0b0c0f; }
+html, body, #__nuxt{ height:100%; }
+body{ font-family: 'NanumSquare', system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; }
+
+/* Design tokens and component classes */
+@layer components {
+  .card { @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-card; }
+  .btn { @apply inline-flex items-center justify-center rounded-lg px-2 py-2 text-sm font-medium transition-colors; height:36px;}
+  .btn-sm { @apply px-1 py-1 text-xs rounded-md; height:28px; }
+  .btn-lg { @apply px-4 py-3 text-base rounded-xl; height:42px;}
+  .btn-primary { @apply bg-primary-600 text-white hover:bg-blue-600; }
+  .container-page { @apply mx-auto px-4; max-width: 88rem !important; }
+  .container-article { @apply max-w-3xl; }
+  .prose { @apply prose-slate; }
+  .dark .prose { @apply prose-invert; }
+  .toc-sticky{ position: sticky; top: 84px; }
+}
+
+/* Inputs visibility */
+input, textarea { color: inherit; }
+input::placeholder, textarea::placeholder { color: #9CA3AF; }
+.dark input::placeholder, .dark textarea::placeholder { color: #6B7280; }
+input[type="password"] { -webkit-text-security: disc; color: #111827; caret-color: #111827; }
+.dark input[type="password"] { color: #F3F4F6; caret-color: #F3F4F6; }
+
+/* Use UI-safe font for form controls (avoid NanumSquare issues) */
+input, textarea, select, button { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important; }

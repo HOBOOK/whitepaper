@@ -1,0 +1,12 @@
+---
+title: 시작하기
+slug: getting-started
+description: 이 백서를 다루는 방법, 기여와 확장.
+position: 10
+---
+
+# 시작하기
+
+- 마크다운은 `/content/whitepaper` 아래에서 편집합니다.
+- 새 페이지? `title`, `slug`, `description`, `position` 프런트매터를 포함한 파일을 추가하세요.
+- 사이드바는 `position` 기준으로 자동 정렬됩니다.
