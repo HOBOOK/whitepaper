@@ -1,0 +1,59 @@
+{
+  "app": { "brand": "Twin Whitepaper" },
+  "nav": { "home": "Home", "info": "Info", "community": "Community", "settings": "Settings", "documents": "Documents" },
+  "languages": { "ko": "Korean", "en": "English" },
+  "settings": { "title": "Settings", "tabs": { "order": "Order", "general": "General" }, "theme": "Theme", "theme_light": "Light", "theme_dark": "Dark", "theme_system": "System", "language": "Language", "order_title": "Edit documents order", "save": "Save", "refresh": "Refresh", "saved": "Saved.", "loading": "Loading..." },
+  "order": { "drag_hint": "Drag items to reorder.", "admin_only": "Admins only.", "load_failed": "Failed to load list.", "save_failed": "Failed to save." },
+  "editor": { "editor": "Editor", "preview": "Preview", "edit": "Edit", "cancel": "Cancel", "save": "Save", "save_failed": "Save failed" },
+  "comments": { "title": "Comments {count}", "input_placeholder": "Write a comment", "add": "Add", "edit": "Edit", "delete": "Delete", "save": "Save", "cancel": "Cancel", "failed": "Failed to add comment", "edit_failed": "Failed to edit comment", "delete_failed": "Failed to delete comment" },
+  "community": {
+    "search": "Search",
+    "new": "New Post",
+    "no_posts": "No posts.",
+    "no_posts_hint_admin": "Click New Post to create the first post.",
+    "no_posts_hint_user": "You can create posts in Admin mode.",
+    "title": "Title",
+    "author": "Author",
+    "updated": "Updated",
+    "created": "Created",
+    "sort": "Sort",
+    "order": "Order",
+    "asc": "Ascending",
+    "desc": "Descending",
+    "page": "Page",
+    "prev": "Prev",
+    "next": "Next",
+    "back": "← List",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save_failed": "Failed to save.",
+    "list_failed": "Failed to load list"
+  },
+  "home": {
+    "title_main": "Platform Whitepaper",
+    "subtitle": "Our philosophy, principles, and architecture playbook for building an industrial digital twin & AI platform.",
+    "search_placeholder": "Search whitepaper",
+    "cards": {
+      "manifesto": { "title": "Manifesto", "desc": "Why we exist and what we promise." },
+      "principles": { "title": "Principles", "desc": "Non-negotiable rules that guide design and delivery." },
+      "playbook": { "title": "Architecture Playbook", "desc": "Practices for API, data, and operations." },
+      "roadmap": { "title": "Roadmap", "desc": "Near-term milestones and long-term vision." }
+    },
+    "featured": "Featured",
+    "updates": "Latest updates"
+  },
+  "common": { "admin_mode": "Admin mode", "done": "Done", "error": "Error", "anonymous": "anonymous" },
+  "history": {
+    "button": "History",
+    "versions": "Versions",
+    "preview": "Preview",
+    "raw": "Raw",
+    "close": "Close",
+    "restore": "Restore",
+    "apply": "Apply to editor",
+    "load_failed": "Failed to load versions",
+    "get_failed": "Failed to get version",
+    "restore_failed": "Failed to restore",
+    "no_selection": "No version selected"
+  }
+}

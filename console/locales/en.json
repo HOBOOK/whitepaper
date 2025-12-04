@@ -1,0 +1,33 @@
+{
+  "nav": {
+    "home": "Home",
+    "info": "Info",
+    "community": "Community",
+    "settings": "Settings",
+    "documents": "Documents"
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "order": "Order",
+      "general": "General"
+    },
+    "theme": "Theme",
+    "theme_light": "Light",
+    "theme_dark": "Dark",
+    "theme_system": "System",
+    "language": "Language",
+    "order_title": "Edit documents order",
+    "save": "Save",
+    "refresh": "Refresh",
+    "saved": "Saved.",
+    "loading": "Loading..."
+  },
+  "order": {
+    "drag_hint": "Drag items to reorder.",
+    "admin_only": "Admins only."
+  },
+  "common": {
+    "admin_mode": "Admin mode"
+  }
+}

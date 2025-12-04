@@ -1,0 +1,33 @@
+{
+  "nav": {
+    "home": "Home",
+    "info": "Info",
+    "community": "Community",
+    "settings": "Settings",
+    "documents": "Documents"
+  },
+  "settings": {
+    "title": "설정",
+    "tabs": {
+      "order": "순서 편집",
+      "general": "일반 설정"
+    },
+    "theme": "테마",
+    "theme_light": "라이트",
+    "theme_dark": "다크",
+    "theme_system": "시스템",
+    "language": "언어",
+    "order_title": "Documents 순서 편집",
+    "save": "저장",
+    "refresh": "새로고침",
+    "saved": "저장되었습니다.",
+    "loading": "불러오는 중..."
+  },
+  "order": {
+    "drag_hint": "항목을 드래그하여 순서를 변경하세요.",
+    "admin_only": "관리자만 접근 가능합니다."
+  },
+  "common": {
+    "admin_mode": "Admin mode"
+  }
+}

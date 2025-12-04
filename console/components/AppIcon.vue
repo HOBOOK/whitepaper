@@ -62,6 +62,22 @@
       <circle cx="12" cy="8" r="3.5" :stroke="color" :stroke-width="strokeWidth"/>
       <path d="M4 20c0-3.314 3.582-6 8-6s8 2.686 8 6" :stroke="color" :stroke-width="strokeWidth" stroke-linecap="round"/>
     </svg>
+    <svg v-else-if="name==='settings'" :width="size" :height="size" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 7h5.5M12.5 7H20" :stroke="color" :stroke-width="strokeWidth" stroke-linecap="round"/>
+      <circle cx="10" cy="7" r="1.6" :stroke="color" :stroke-width="strokeWidth" fill="none"/>
+      <path d="M4 12h3.5M9.5 12H20" :stroke="color" :stroke-width="strokeWidth" stroke-linecap="round"/>
+      <circle cx="8.5" cy="12" r="1.6" :stroke="color" :stroke-width="strokeWidth" fill="none"/>
+      <path d="M4 17h9.5M16.5 17H20" :stroke="color" :stroke-width="strokeWidth" stroke-linecap="round"/>
+      <circle cx="15" cy="17" r="1.6" :stroke="color" :stroke-width="strokeWidth" fill="none"/>
+    </svg>
+    <svg v-else-if="name==='drag'" :width="size" :height="size" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="9" cy="7" r="1" :fill="color"/>
+      <circle cx="15" cy="7" r="1" :fill="color"/>
+      <circle cx="9" cy="12" r="1" :fill="color"/>
+      <circle cx="15" cy="12" r="1" :fill="color"/>
+      <circle cx="9" cy="17" r="1" :fill="color"/>
+      <circle cx="15" cy="17" r="1" :fill="color"/>
+    </svg>
     <svg v-else-if="name==='close'" :width="size" :height="size" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M6 6l12 12" :stroke="color" :stroke-width="strokeWidth" stroke-linecap="round"/>
       <path d="M18 6L6 18" :stroke="color" :stroke-width="strokeWidth" stroke-linecap="round"/>

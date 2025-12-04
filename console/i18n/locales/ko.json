@@ -1,0 +1,59 @@
+{
+  "app": { "brand": "트윈 Whitepaper" },
+  "nav": { "home": "홈", "info": "정보", "community": "커뮤니티", "settings": "설정", "documents": "문서" },
+  "languages": { "ko": "한국어", "en": "English" },
+  "settings": { "title": "설정", "tabs": { "order": "순서 편집", "general": "일반 설정" }, "theme": "테마", "theme_light": "라이트", "theme_dark": "다크", "theme_system": "시스템", "language": "언어", "order_title": "Documents 순서 편집", "save": "저장", "refresh": "새로고침", "saved": "저장되었습니다.", "loading": "불러오는 중..." },
+  "order": { "drag_hint": "항목을 드래그하여 순서를 변경하세요.", "admin_only": "관리자만 접근 가능합니다.", "load_failed": "목록을 불러오지 못했습니다.", "save_failed": "저장에 실패했습니다." },
+  "editor": { "editor": "편집", "preview": "미리보기", "edit": "편집", "cancel": "취소", "save": "저장", "save_failed": "저장 실패" },
+  "comments": { "title": "댓글 {count}", "input_placeholder": "댓글 입력", "add": "등록", "edit": "수정", "delete": "삭제", "save": "저장", "cancel": "취소", "failed": "댓글 실패", "edit_failed": "댓글 수정 실패", "delete_failed": "댓글 삭제 실패" },
+  "community": {
+    "search": "검색",
+    "new": "새 글",
+    "no_posts": "게시물이 없습니다.",
+    "no_posts_hint_admin": "새 글 버튼을 눌러 첫 게시물을 작성해 보세요.",
+    "no_posts_hint_user": "관리자 모드에서 새 글을 작성할 수 있습니다.",
+    "title": "제목",
+    "author": "작성자",
+    "updated": "수정일",
+    "created": "작성일",
+    "sort": "정렬",
+    "order": "순서",
+    "asc": "오름차순",
+    "desc": "내림차순",
+    "page": "페이지",
+    "prev": "이전",
+    "next": "다음",
+    "back": "← 목록",
+    "edit": "편집",
+    "delete": "삭제",
+    "save_failed": "저장 실패",
+    "list_failed": "목록 로드 실패"
+  },
+  "home": {
+    "title_main": "플랫폼 백서",
+    "subtitle": "산업용 디지털 트윈과 AI 기반 플랫폼을 만들기 위한 우리의 철학, 원칙, 아키텍처 플레이북을 담았습니다.",
+    "search_placeholder": "백서 검색",
+    "cards": {
+      "manifesto": { "title": "선언문", "desc": "우리가 왜 존재하며 무엇을 약속하는가." },
+      "principles": { "title": "원칙", "desc": "설계와 전달을 이끄는 비타협 규칙." },
+      "playbook": { "title": "아키텍처 플레이북", "desc": "API·데이터·운영을 위한 실천 표준." },
+      "roadmap": { "title": "로드맵", "desc": "단기 마일스톤과 장기 비전." }
+    },
+    "featured": "추천 문서",
+    "updates": "최신 업데이트"
+  },
+  "common": { "admin_mode": "관리자 모드", "done": "완료", "error": "에러", "anonymous": "anonymous" },
+  "history": {
+    "button": "히스토리",
+    "versions": "버전 목록",
+    "preview": "미리보기",
+    "raw": "원본",
+    "close": "닫기",
+    "restore": "복원",
+    "apply": "에디터에 적용",
+    "load_failed": "버전 목록을 불러오지 못했습니다",
+    "get_failed": "버전을 가져오지 못했습니다",
+    "restore_failed": "복원에 실패했습니다",
+    "no_selection": "선택된 버전이 없습니다"
+  }
+}

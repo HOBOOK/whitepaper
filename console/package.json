@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@nuxt/content": "^2.13.1",
+    "@nuxtjs/i18n": "^10.2.1",
     "markdown-it": "^14.1.0"
   },
   "devDependencies": {

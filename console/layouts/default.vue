@@ -40,25 +40,29 @@
               <div class="px-2 py-2">
                 <NuxtLink to="/" :class="[navClass('/'), 'rounded-lg']">
                   <app-icon name="home" class="mr-2" />
-                  <span>Home</span>
+                  <span>{{ $t('nav.home') }}</span>
                 </NuxtLink>
                 <NuxtLink to="/info" :class="[navClass('/info'), 'rounded-lg']">
                   <app-icon name="info" class="mr-2" />
-                  <span>Info</span>
+                  <span>{{ $t('nav.info') }}</span>
                 </NuxtLink>
                 <NuxtLink to="/community" :class="[navClass('/community'), 'rounded-lg']">
                   <app-icon name="chat" class="mr-2" />
-                  <span>Community</span>
+                  <span>{{ $t('nav.community') }}</span>
+                </NuxtLink>
+                <NuxtLink to="/settings" :class="[navClass('/settings'), 'rounded-lg']">
+                  <app-icon name="settings" class="mr-2" />
+                  <span>{{ $t('nav.settings') }}</span>
                 </NuxtLink>
               </div>
               <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-800 flex flex-col flex-1 min-h-0">
-                <div class="text-[10px] uppercase tracking-wide text-gray-500 mb-1 px-3">Documents</div>
+                <div class="text-[10px] uppercase tracking-wide text-gray-500 mb-1 px-3">{{ $t('nav.documents') }}</div>
                 <div class="px-2 pr-3 flex-1 min-h-0 overflow-y-auto overscroll-contain text-sm leading-snug">
                   <content-nav :items="tree" />
                 </div>
               </div>
               <div class="py-1 my-3 mx-3 card border-gray-200 dark:border-gray-800">
-                <button class="btn w-full btn-sm" @click="openAdmin"><app-icon name="account" class="mr-2" /> Admin mode</button>
+                <button class="btn w-full btn-sm" @click="openAdmin"><app-icon name="account" class="mr-2" /> {{ $t('common.admin_mode') }}</button>
               </div>
             </div>
           </aside>
@@ -67,9 +71,9 @@
           <main class="min-w-0">
             <slot />
 
-            <div class="fixed bottom-0 left-0 py-2 right-0 z-20 bg-white/80 dark:bg-gray-900/80 backdrop-blur">
+            <div class="fixed bottom-0 left-0 py-2 right-0 z-20 backdrop-blur">
               <div class="text-center text-xs text-gray-500">
-                © {{ new Date().getFullYear() }} VAZIL Company · Platform Team · Digital Twin Platform Whitepaper
+                © {{ new Date().getFullYear() }} Whitepaper
               </div>
             </div>
           </main>
@@ -89,20 +93,18 @@
               </NuxtLink>
             </div>
             <search-box class="mb-2" @search="onSearch" />
-            <NuxtLink to="/" :class="[navClass('/'), 'rounded-lg']" @click="drawer = false">
-              <app-icon name="home" class="mr-2" /><span>Home</span>
+            <NuxtLink to="/" :class="[navClass('/') , 'rounded-lg']" @click="drawer = false">
+              <app-icon name="home" class="mr-2" /><span>{{ $t('nav.home') }}</span>
             </NuxtLink>
             <NuxtLink to="/info" :class="[navClass('/info'), 'rounded-lg']" @click="drawer = false">
-              <app-icon name="info" class="mr-2" /><span>Info</span>
+              <app-icon name="info" class="mr-2" /><span>{{ $t('nav.info') }}</span>
             </NuxtLink>
             <NuxtLink to="/community" :class="[navClass('/community'), 'rounded-lg']" @click="drawer = false">
-              <app-icon name="chat" class="mr-2" /><span>Community</span>
+              <app-icon name="chat" class="mr-2" /><span>{{ $t('nav.community') }}</span>
             </NuxtLink>
-            <div class="text-xs uppercase tracking-wide text-gray-500 mt-4 mb-2 px-3">Documents</div>
-            <content-nav :items="tree" />
-            <div class="py-1 my-3 card  ">
-              <button class="btn btn-sm w-full" @click="() => { drawer = false; openAdmin() }">Admin mode</button>
-            </div>
+            <NuxtLink v-if="admin" to="/settings" :class="[navClass('/settings'), 'rounded-lg']" @click="drawer = false">
+              <app-icon name="settings" class="mr-2" /><span>{{ $t('nav.settings') }}</span>
+            </NuxtLink>
           </nav>
         </div>
       </transition>
@@ -205,6 +207,11 @@ onMounted(() => {
   window.addEventListener('resize', updateSidebarLeft)
 })
 onBeforeUnmount(() => { window.removeEventListener('resize', updateSidebarLeft) })
+
+const { locale: i18nLocale } = useI18n()
+import { useLocale } from '@/composables/useLocale'
+const { locale } = useLocale()
+watch(locale, (v) => { i18nLocale.value = (v || 'ko-KR').startsWith('en') ? 'en' : 'ko' }, { immediate: true })
 </script>
 
 <style>

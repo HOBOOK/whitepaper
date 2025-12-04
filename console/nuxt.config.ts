@@ -3,7 +3,8 @@ export default defineNuxtConfig({
     modules: [
         '@nuxt/content',
         '@nuxtjs/tailwindcss',
-        '@nuxtjs/color-mode'
+        '@nuxtjs/color-mode',
+        '@nuxtjs/i18n'
     ],
     app: {
         head: {
@@ -51,5 +52,17 @@ export default defineNuxtConfig({
         public: {
             adminEnabled: true
         }
+    },
+    i18n: {
+        locales: [
+            { code: 'ko', iso: 'ko-KR', name: 'Korean', file: 'ko.json' },
+            { code: 'en', iso: 'en-US', name: 'English', file: 'en.json' }
+        ],
+        defaultLocale: 'ko',
+        langDir: 'locales',
+        lazy: true,
+        strategy: 'no_prefix',
+        detectBrowserLanguage: false,
+        fallbackLocale: 'ko'
     }
 })
