@@ -3,7 +3,7 @@
   "nav": { "home": "홈", "info": "정보", "community": "커뮤니티", "settings": "설정", "documents": "문서" },
   "languages": { "ko": "한국어", "en": "English" },
   "settings": { "title": "설정", "tabs": { "order": "순서 편집", "general": "일반 설정" }, "theme": "테마", "theme_light": "라이트", "theme_dark": "다크", "theme_system": "시스템", "language": "언어", "order_title": "Documents 순서 편집", "save": "저장", "refresh": "새로고침", "saved": "저장되었습니다.", "loading": "불러오는 중..." },
-  "order": { "drag_hint": "항목을 드래그하여 순서를 변경하세요.", "admin_only": "관리자만 접근 가능합니다.", "load_failed": "목록을 불러오지 못했습니다.", "save_failed": "저장에 실패했습니다." },
+  "order": { "drag_hint": "항목을 드래그하여 순서를 변경하세요.", "admin_only": "관리자만 접근 가능합니다.", "load_failed": "목록을 불러오지 못했습니다.", "save_failed": "저장에 실패했습니다.", "new_folder": "새 폴더 생성", "parent_path": "부모 경로", "folder_name": "폴더 이름" },
   "editor": { "editor": "편집", "preview": "미리보기", "edit": "편집", "cancel": "취소", "save": "저장", "save_failed": "저장 실패" },
   "comments": { "title": "댓글 {count}", "input_placeholder": "댓글 입력", "add": "등록", "edit": "수정", "delete": "삭제", "save": "저장", "cancel": "취소", "failed": "댓글 실패", "edit_failed": "댓글 수정 실패", "delete_failed": "댓글 삭제 실패" },
   "community": {

@@ -3,7 +3,7 @@
   "nav": { "home": "Home", "info": "Info", "community": "Community", "settings": "Settings", "documents": "Documents" },
   "languages": { "ko": "Korean", "en": "English" },
   "settings": { "title": "Settings", "tabs": { "order": "Order", "general": "General" }, "theme": "Theme", "theme_light": "Light", "theme_dark": "Dark", "theme_system": "System", "language": "Language", "order_title": "Edit documents order", "save": "Save", "refresh": "Refresh", "saved": "Saved.", "loading": "Loading..." },
-  "order": { "drag_hint": "Drag items to reorder.", "admin_only": "Admins only.", "load_failed": "Failed to load list.", "save_failed": "Failed to save." },
+  "order": { "drag_hint": "Drag items to reorder.", "admin_only": "Admins only.", "load_failed": "Failed to load list.", "save_failed": "Failed to save.", "new_folder": "Create New Folder", "parent_path": "Parent path", "folder_name": "Folder name" },
   "editor": { "editor": "Editor", "preview": "Preview", "edit": "Edit", "cancel": "Cancel", "save": "Save", "save_failed": "Save failed" },
   "comments": { "title": "Comments {count}", "input_placeholder": "Write a comment", "add": "Add", "edit": "Edit", "delete": "Delete", "save": "Save", "cancel": "Cancel", "failed": "Failed to add comment", "edit_failed": "Failed to edit comment", "delete_failed": "Failed to delete comment" },
   "community": {

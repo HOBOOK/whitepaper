@@ -6,94 +6,156 @@
       <div v-if="loading" class="text-sm text-gray-500">{{ $t('settings.loading') }}</div>
       <div v-else>
         <div class="text-xs text-gray-500 mb-2">{{ $t('order.drag_hint') }}</div>
-        <ul @dragover.prevent @drop="onDrop" class="select-none">
-          <li v-for="(it, idx) in items" :key="it.slug"
-              class="flex items-center justify-between border dark:border-gray-600 rounded-lg px-3 py-2 mb-2 bg-white dark:bg-gray-800"
-              :draggable="true"
-              @dragstart="onDragStart(idx)"
-              @dragenter.prevent="onDragEnter(idx)"
-              @dragend="onDragEnd">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="w-8 text-center text-xs text-gray-500 cursor-grab"><app-icon name="drag" /></div>
-              <div class="min-w-0">
-                <div class="text-sm font-medium truncate">{{ it.title || titleFromSlug(it.slug) }}</div>
-                <div class="text-xs text-gray-500 truncate">{{ it.slug }}</div>
-              </div>
-            </div>
-          </li>
-        </ul>
+
+        <div class="flex items-center gap-2 mb-3">
+          <button class="btn btn-sm btn-primary p-2" @click="openCreateFolder">{{ $t('order.new_folder') || 'New Folder' }}</button>
+        </div>
+
+        <!-- Tree UI -->
+        <div>
+          <OrderTree :node="root" :depth="0" :admin="admin" :token="token" @reordered="onReordered" @new-folder="openCreateFolder" />
+        </div>
 
         <div class="mt-4 flex gap-2">
           <button class="btn" @click="reload" :disabled="saving">{{ $t('settings.refresh') }}</button>
-          <button class="btn btn-primary" @click="save" :disabled="saving || !items.length">{{ $t('settings.save') }}</button>
         </div>
         <div v-if="error" class="text-xs text-red-600 mt-2">{{ error }}</div>
         <div v-if="saved" class="text-xs text-green-600 mt-2">{{ $t('settings.saved') }}</div>
       </div>
     </div>
+
+    <!-- Create Folder Modal -->
+    <transition name="fade">
+      <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/40" @click="closeCreateFolder"></div>
+        <div class="relative card p-5 w-full max-w-md">
+          <div class="text-sm font-semibold mb-3">{{ $t('order.new_folder') || 'New Folder' }}</div>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">{{ $t('order.parent_path') || 'Parent folder (empty for root)' }}</label>
+              <input v-model="targetParent" list="folder-options" class="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. section/sub" />
+              <datalist id="folder-options">
+                <option v-for="p in folderOptions" :key="p" :value="p" />
+              </datalist>
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">{{ $t('order.folder_name') || 'Folder name' }}</label>
+              <input v-model="newFolderName" class="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. new-folder" @keyup.enter="confirmCreateFolder" />
+            </div>
+          </div>
+          <div class="mt-4 flex justify-end gap-2">
+            <button class="btn" @click="closeCreateFolder">{{ $t('comments.cancel') || 'Cancel' }}</button>
+            <button class="btn btn-primary" :disabled="!newFolderName" @click="confirmCreateFolder">{{ $t('settings.save') || 'Create' }}</button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
 <script setup>
 import AppIcon from '@/components/AppIcon.vue'
+import OrderTree from '@/components/OrderTree.vue'
 import { useAdmin } from '@/composables/useAdmin'
 import { refreshNuxtData } from '#app'
 const { admin, token } = useAdmin()
-
-// i18n use only for side-effects if needed in future
 const { t } = useI18n()
 
 const loading = ref(true)
 const saving = ref(false)
 const saved = ref(false)
 const error = ref('')
-const items = ref([])
 
-let dragIndex = -1
-function onDragStart(i){ dragIndex = i }
-function onDragEnter(i){
-  if(dragIndex === -1 || dragIndex === i) return
-  const list = items.value.slice()
-  const [moved] = list.splice(dragIndex, 1)
-  list.splice(i, 0, moved)
-  items.value = list
-  dragIndex = i
+const root = reactive({ name: '', path: '', folders: [], leaves: [] })
+provide('orderRootRef', ref(root))
+
+const relFromPath = (p) => (p || '').replace(/^\/?whitepaper\//, '').replace(/^\//, '')
+const folderOf = (rel) => (rel.split('/').slice(0,-1).join('/') || '')
+const decodeSeg = (s) => { try { return decodeURIComponent(s) } catch { return s } }
+
+function ensureFolderNode(parent, name, path){
+  let node = parent.folders.find(f => f.path === path)
+  if(!node){
+    node = { name, path, folders: [], leaves: [] }
+    parent.folders.push(node)
+  }
+  return node
 }
-function onDrop(){ dragIndex = -1 }
-function onDragEnd(){ dragIndex = -1 }
 
-function titleFromSlug(s){
-  return (s||'').split('-').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ')
+function buildTree(docs){
+  root.folders = []
+  root.leaves = []
+  for(const d of docs){
+    const segs = (d.folder || '').split('/').filter(Boolean)
+    let cur = root
+    let acc = ''
+    for(const seg of segs){
+      acc += (acc ? '/' : '') + seg
+      cur = ensureFolderNode(cur, decodeSeg(seg), acc)
+    }
+    cur.leaves.push({ path: d.path, title: d.title, position: d.position||999 })
+  }
+  // sort folders by name and leaves by position then title
+  const coll = new Intl.Collator('ko')
+  function sortRec(node){
+    node.leaves.sort((a,b) => {
+      const ap = a.position ?? 999, bp = b.position ?? 999
+      if(ap !== bp) return ap - bp
+      return coll.compare(a.title||'', b.title||'')
+    })
+    node.folders.sort((a,b) => coll.compare(a.name||'', b.name||''))
+    node.folders.forEach(sortRec)
+  }
+  sortRec(root)
 }
 
 async function load(){
   loading.value = true
   error.value = ''
   try{
-    const list = await queryContent('whitepaper').where({ _partial: { $ne: true } }).only(['_path','title','position','slug']).find()
-    const filtered = list.filter(n => n.slug !== 'overview' && n.slug !== 'developers')
-    filtered.sort((a,b) => (a.position || 999) - (b.position || 999))
-    items.value = filtered.map(n => ({ slug: n.slug, title: n.title || '', position: n.position || 999 }))
+    const list = await queryContent('whitepaper').where({ _partial: { $ne: true } }).only(['_path','title','position']).find()
+    const mapped = list.map(n => {
+      const rel = relFromPath(n._path||'')
+      return { path: rel, title: n.title||'', position: n.position||999, folder: folderOf(rel) }
+    })
+    buildTree(mapped)
   }catch(e){ error.value = t('common.error') || '에러' }
   finally{ loading.value = false }
 }
 
 function reload(){ load(); saved.value = false }
+async function onReordered(){
+  saved.value = true
+  await load() // reflect immediately without manual refresh
+  setTimeout(() => saved.value = false, 1000)
+}
 
-async function save(){
-  saving.value = true
-  error.value = ''
-  saved.value = false
+// Refs used by folder creation modal
+const showCreateModal = ref(false)
+const targetParent = ref('')
+const newFolderName = ref('')
+
+// Build list of all existing folder paths for datalist
+const folderOptions = computed(() => {
+  const out = ['']
+  function walk(node){ for(const f of node.folders||[]){ out.push(f.path || ''); walk(f) } }
+  walk(root)
+  return Array.from(new Set(out.filter(x => x !== undefined)))
+})
+
+function openCreateFolder(basePath){
+  if(typeof basePath === 'string'){ targetParent.value = basePath }
+  showCreateModal.value = true
+}
+function closeCreateFolder(){ showCreateModal.value = false }
+async function confirmCreateFolder(){ await createFolder(); showCreateModal.value = false; newFolderName.value = '' }
+
+async function createFolder(){
   try{
-    const order = items.value.map(it => it.slug)
-    await $fetch('/api/content/order', { method: 'POST', body: { order }, headers: token?.value ? { 'x-admin-pass': token.value } : {} })
-    await refreshNuxtData('navTree')
-    saved.value = true
-  }catch(e){
-    error.value = (e && e.data && e.data.message) || (t('common.error') || '에러')
-  }finally{
-    saving.value = false
-  }
+    const headers = (token && typeof token === 'object' && token.value) ? { 'x-admin-pass': token.value } : (typeof token === 'string' && token ? { 'x-admin-pass': token } : {})
+    await $fetch('/api/content/folder/create', { method:'POST', body:{ parent: targetParent.value, name: newFolderName.value }, headers })
+    await load()
+  }catch(e){ alert((e && e.data && e.data.message) || 'Error') }
 }
 
 onMounted(load)

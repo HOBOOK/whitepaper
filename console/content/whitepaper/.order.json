@@ -1,0 +1,8 @@
+{
+  "children": [
+    "test/",
+    "principles",
+    "manifesto",
+    "getting-started"
+  ]
+}

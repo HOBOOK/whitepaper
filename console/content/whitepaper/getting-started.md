@@ -2,7 +2,8 @@
 title: 시작하기
 slug: getting-started
 description: 이 백서를 다루는 방법, 기여와 확장.
-position: 5
+position: 4
+docId: 77ac644b-54a6-4754-a7b2-583a284b3061
 ---
 
 # 시작하기

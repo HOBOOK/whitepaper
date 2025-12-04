@@ -4,6 +4,7 @@ slug: principles
 description: 제품, 아키텍처, 운영을 위한 비타협적 규칙.
 position: 2
 featured: true
+docId: 8a7a3789-0d78-480e-b8fd-829713ff1bfc
 ---
 
 # 플랫폼 원칙

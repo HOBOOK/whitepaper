@@ -82,6 +82,13 @@
       <path d="M6 6l12 12" :stroke="color" :stroke-width="strokeWidth" stroke-linecap="round"/>
       <path d="M18 6L6 18" :stroke="color" :stroke-width="strokeWidth" stroke-linecap="round"/>
     </svg>
+    <!-- New chevron icons for collapsible folders -->
+    <svg v-else-if="name==='chevron-right'" :width="size" :height="size" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9 6l6 6-6 6" :stroke="color" :stroke-width="strokeWidth" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <svg v-else-if="name==='chevron-down'" :width="size" :height="size" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 9l6 6 6-6" :stroke="color" :stroke-width="strokeWidth" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
   </span>
 </template>
 

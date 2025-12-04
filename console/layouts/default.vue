@@ -149,29 +149,89 @@ function titleFromSeg(seg) {
 
 // Build hierarchical navigation tree from content paths, excluding info-only docs
 const { data: tree } = await useAsyncData('navTree', async () => {
-  const list = await queryContent('whitepaper').where({ _partial: { $ne: true } }).only(['_path', 'title', 'position', 'slug']).find()
-  // Exclude overview and developers from Documents
+  const list = await queryContent('whitepaper')
+    .where({ _partial: { $ne: true } })
+    .only(['_path', 'title', 'position', 'slug'])
+    .find()
   const filtered = list.filter(n => n.slug !== 'overview' && n.slug !== 'developers')
-  filtered.sort((a, b) => (a.position || 999) - (b.position || 999))
+
   const root = []
   const map = new Map()
+  const relPath = (p) => (p || '').replace(/^\/?whitepaper\//, '').replace(/^\//, '').replace(/\/$/, '')
+  const decodeSeg = (s) => { try { return decodeURIComponent(s) } catch { return s } }
+
   for (const n of filtered) {
-    const rel = (n._path || '').replace(/^\/?whitepaper\/?|^\//g, '').replace(/^whitepaper\//, '')
-    const segs = rel.split('/').filter(Boolean)
+    const rel = relPath(n._path || '')
+    const segsEnc = rel.split('/').filter(Boolean)
     let parent = root
     let keyPath = ''
-    for (let i = 0; i < segs.length - 1; i++) {
-      keyPath += '/' + segs[i]
+    for (let i = 0; i < segsEnc.length - 1; i++) {
+      keyPath += (keyPath ? '/' : '') + segsEnc[i]
       if (!map.has(keyPath)) {
-        const node = { title: titleFromSeg(segs[i]), _path: null, children: [] }
+        const node = { title: decodeSeg(segsEnc[i]), key: keyPath, _path: null, children: [] }
         map.set(keyPath, node)
         parent.push(node)
       }
       parent = map.get(keyPath).children
     }
-    const leaf = { title: n.title || titleFromSeg(segs[segs.length - 1]), _path: n._path, children: [] }
+    const leafTitle = n.title || decodeSeg(segsEnc[segsEnc.length - 1])
+    const leaf = { title: leafTitle, _path: n._path, position: n.position || 999, children: [] }
     parent.push(leaf)
   }
+
+  // Load folder order preferences
+  let folderOrders = {}
+  try{
+    const res = await $fetch('/api/content/folder-order')
+    folderOrders = res?.orders || {}
+  }catch{}
+
+  // Sort children within each folder by position (leaf docs), then title; folders by saved order or title
+  const coll = new Intl.Collator('ko')
+  function sortRec(nodes, parentKey=''){
+    const folders = nodes.filter(n => !n._path)
+    const leaves = nodes.filter(n => n._path)
+
+    // Saved mixed children order e.g., ['chapter-1/','intro','guide'] where '/' suffix marks folder key seg
+    const saved = folderOrders[parentKey] || []
+
+    // map child logical keys under this parent
+    const folderKey = (n) => (n.key||'').split('/').pop() + '/'
+    const fileKey = (n) => {
+      const path = (n._path||'').replace(/^\/?whitepaper\//,'')
+      return (path.split('/').pop()||'').replace(/\.md$/,'')
+    }
+
+    // Sort with saved order priority
+    folders.sort((a,b) => {
+      const ia = saved.indexOf(folderKey(a))
+      const ib = saved.indexOf(folderKey(b))
+      if(ia !== -1 || ib !== -1){
+        if(ia === -1) return 1
+        if(ib === -1) return -1
+        return ia - ib
+      }
+      return coll.compare(a.title||'', b.title||'')
+    })
+
+    leaves.sort((a,b) => {
+      const ia = saved.indexOf(fileKey(a))
+      const ib = saved.indexOf(fileKey(b))
+      if(ia !== -1 || ib !== -1){
+        if(ia === -1) return 1
+        if(ib === -1) return -1
+        return ia - ib
+      }
+      const ap = a.position ?? 999, bp = b.position ?? 999
+      if(ap !== bp) return ap - bp
+      return coll.compare(a.title||'', b.title||'')
+    })
+
+    nodes.splice(0, nodes.length, ...folders, ...leaves)
+    folders.forEach(f => { if(f.children && f.children.length) sortRec(f.children, f.key) })
+  }
+  sortRec(root, '')
+
   return root
 })
 

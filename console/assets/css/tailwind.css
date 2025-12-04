@@ -49,7 +49,7 @@ body{ font-family: 'NanumSquare', system-ui, -apple-system, Segoe UI, Roboto, He
   .btn-primary { @apply bg-primary-600 text-white hover:bg-blue-600; }
   .container-page { @apply mx-auto px-4; max-width: 88rem !important; }
   .container-article { @apply max-w-3xl; }
-  .prose { @apply prose-slate; }
+  .prose { @apply prose-slate; max-width:100%; }
   .dark .prose { @apply prose-invert; }
   .toc-sticky{ position: sticky; top: 84px; }
 }

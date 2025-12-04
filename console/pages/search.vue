@@ -47,8 +47,13 @@ onMounted(() => {
 })
 
 function toFor(r){
-  const seg = (r._path || '').split('/').filter(Boolean).pop() || ''
-  return seg ? `/docs/${seg}` : '/'
+  if (!r._path) return '/'
+
+  // "/whitepaper" 제거
+  const cleaned = r._path.replace(/^\/whitepaper\/?/, '')
+
+  // 나머지 전체 경로를 docs 밑으로
+  return `/docs/${cleaned}`
 }
 
 let timer

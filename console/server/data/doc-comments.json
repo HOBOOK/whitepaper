@@ -1,10 +1,63 @@
 {
-  "manifesto": [
+  "3730a149-eeea-491f-b2cc-6b313a6a6f0f": [
     {
       "id": "1764757889949",
       "text": "dd",
       "author": "anonymous",
       "created": 1764757889949,
+      "creatorIp": "::1"
+    },
+    {
+      "id": "1764833216376",
+      "text": "ㅇㄴㅁㅇㄴㅁ",
+      "author": "anonymous",
+      "created": 1764833216376,
+      "creatorIp": "::1"
+    },
+    {
+      "id": "1764833604726",
+      "text": "ㅊㅌㅊㅌ",
+      "author": "anonymous",
+      "created": 1764833604726,
+      "creatorIp": "::1"
+    },
+    {
+      "id": "1764834717824",
+      "text": "zz",
+      "author": "anonymous",
+      "created": 1764834717824,
+      "creatorIp": "::1"
+    },
+    {
+      "id": "1764835436519",
+      "text": "zz",
+      "author": "anonymous",
+      "created": 1764835436519,
+      "creatorIp": "::1"
+    },
+    {
+      "id": "1764835647784",
+      "text": "dd",
+      "author": "anonymous",
+      "created": 1764835647784,
+      "creatorIp": "::1"
+    }
+  ],
+  "bfb4e8cb-c687-41ad-8243-41c8d84d414d": [
+    {
+      "id": "1764833753105",
+      "text": "ㅋㅋ",
+      "author": "anonymous",
+      "created": 1764833753105,
+      "creatorIp": "::1"
+    }
+  ],
+  "37d26b1d-2fc9-40f2-b866-c55f7e3087da": [
+    {
+      "id": "tnt2g0xawes",
+      "text": "zz",
+      "created": 1764836693559,
+      "author": "",
       "creatorIp": "::1"
     }
   ]
