@@ -13,7 +13,7 @@
 
         <!-- Tree UI -->
         <div>
-          <OrderTree :node="root" :depth="0" :admin="admin" :token="token" @reordered="onReordered" @new-folder="openCreateFolder" />
+          <OrderTree :node="root" :depth="0" :admin="admin" :token="token" :node-order="folderOrders" @reordered="onReordered" @new-folder="openCreateFolder" />
         </div>
 
         <div class="mt-4 flex gap-2">
@@ -67,6 +67,7 @@ const saved = ref(false)
 const error = ref('')
 
 const root = reactive({ name: '', path: '', folders: [], leaves: [] })
+const folderOrders = ref({})
 provide('orderRootRef', ref(root))
 
 const relFromPath = (p) => (p || '').replace(/^\/?whitepaper\//, '').replace(/^\//, '')
@@ -76,13 +77,13 @@ const decodeSeg = (s) => { try { return decodeURIComponent(s) } catch { return s
 function ensureFolderNode(parent, name, path){
   let node = parent.folders.find(f => f.path === path)
   if(!node){
-    node = { name, path, folders: [], leaves: [] }
+    node = { type: 'folder', name, path, folders: [], leaves: [] }
     parent.folders.push(node)
   }
   return node
 }
 
-function buildTree(docs){
+function buildTree(docs, folderOrders = {}){
   root.folders = []
   root.leaves = []
   for(const d of docs){
@@ -95,18 +96,74 @@ function buildTree(docs){
     }
     cur.leaves.push({ path: d.path, title: d.title, position: d.position||999 })
   }
-  // sort folders by name and leaves by position then title
+  
+  // Apply saved folder/file order preferences
   const coll = new Intl.Collator('ko')
-  function sortRec(node){
-    node.leaves.sort((a,b) => {
-      const ap = a.position ?? 999, bp = b.position ?? 999
-      if(ap !== bp) return ap - bp
-      return coll.compare(a.title||'', b.title||'')
-    })
-    node.folders.sort((a,b) => coll.compare(a.name||'', b.name||''))
-    node.folders.forEach(sortRec)
+  function sortRec(node, parentKey = ''){
+    const folders = node.folders || []
+    const leaves = node.leaves || []
+    const saved = folderOrders[parentKey] || []
+    
+    if(saved.length > 0){
+      // Build maps for quick lookup
+      const folderMap = new Map(folders.map(f => [(f.path || '').split('/').pop() + '/', f]))
+      const leafMap = new Map(leaves.map(l => {
+        const fileKey = (l.path || '').split('/').pop() || ''
+        return [fileKey, l]
+      }))
+      
+      // Reorder according to saved order
+      const reordered = []
+      const used = new Set()
+      
+      for(const key of saved){
+        if(folderMap.has(key)){
+          reordered.push(folderMap.get(key))
+          used.add(key)
+        } else if(leafMap.has(key)){
+          reordered.push(leafMap.get(key))
+          used.add(key)
+        }
+      }
+      
+      // Add remaining folders (alphabetically)
+      folders.filter(f => !used.has((f.path || '').split('/').pop() + '/')).sort((a,b) => coll.compare(a.name||'', b.name||'')).forEach(f => reordered.push(f))
+      
+      // Add remaining leaves (by position then alphabetically)
+      leaves.filter(l => {
+        const fileKey = (l.path || '').split('/').pop() || ''
+        return !used.has(fileKey)
+      }).sort((a,b) => {
+        const ap = a.position ?? 999, bp = b.position ?? 999
+        if(ap !== bp) return ap - bp
+        return coll.compare(a.title||'', b.title||'')
+      }).forEach(l => reordered.push(l))
+      
+      node.folders = []
+      node.leaves = []
+      for(const item of reordered){
+        if(item.folders !== undefined){
+          node.folders.push(item)
+        } else {
+          node.leaves.push(item)
+        }
+      }
+    } else {
+      // Default: sort folders by name, leaves by position
+      node.leaves.sort((a,b) => {
+        const ap = a.position ?? 999, bp = b.position ?? 999
+        if(ap !== bp) return ap - bp
+        return coll.compare(a.title||'', b.title||'')
+      })
+      node.folders.sort((a,b) => coll.compare(a.name||'', b.name||''))
+    }
+    
+    // Recurse into folders
+    for(const f of node.folders || []){
+      sortRec(f, f.path || '')
+    }
   }
-  sortRec(root)
+  sortRec(root, '')
 }
 
 async function load(){
@@ -118,7 +175,14 @@ async function load(){
       const rel = relFromPath(n._path||'')
       return { path: rel, title: n.title||'', position: n.position||999, folder: folderOf(rel) }
     })
-    buildTree(mapped)
+    
+    // Load folder order preferences
+    try {
+      const res = await $fetch('/api/content/folder-order')
+      folderOrders.value = res?.orders || {}
+    } catch {}
+    
+    buildTree(mapped, folderOrders.value)
   }catch(e){ error.value = t('common.error') || '에러' }
   finally{ loading.value = false }
 }
@@ -126,7 +190,10 @@ async function load(){
 function reload(){ load(); saved.value = false }
 async function onReordered(){
   saved.value = true
-  await load() // reflect immediately without manual refresh
+  await Promise.all([
+    load(), // reflect immediately in order editor
+    refreshNuxtData('navTree') // refresh sidebar navigation
+  ])
   setTimeout(() => saved.value = false, 1000)
 }
 

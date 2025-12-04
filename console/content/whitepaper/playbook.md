@@ -2,7 +2,7 @@
 title: 아키텍처 플레이북
 slug: playbook
 description: API, 데이터 모델, 시뮬레이션, 운영 표준.
-position: 1
+position: 2
 docId: df1548c1-d0fe-4cb9-838c-be13b9bcc370
 ---
 

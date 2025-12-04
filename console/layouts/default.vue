@@ -195,39 +195,55 @@ const { data: tree } = await useAsyncData('navTree', async () => {
     // Saved mixed children order e.g., ['chapter-1/','intro','guide'] where '/' suffix marks folder key seg
     const saved = folderOrders[parentKey] || []
 
-    // map child logical keys under this parent
-    const folderKey = (n) => (n.key||'').split('/').pop() + '/'
-    const fileKey = (n) => {
-      const path = (n._path||'').replace(/^\/?whitepaper\//,'')
-      return (path.split('/').pop()||'').replace(/\.md$/,'')
+    // If saved order exists, use it for mixed folder/file ordering
+    if(saved.length > 0){
+      // Build maps for quick lookup
+      const folderMap = new Map(folders.map(f => [(f.key||'').split('/').pop() + '/', f]))
+      const leafMap = new Map(leaves.map(l => {
+        const path = (l._path||'').replace(/^\/?whitepaper\//,'')
+        const key = (path.split('/').pop()||'').replace(/\.md$/,'')
+        return [key, l]
+      }))
+
+      // Reorder nodes according to saved order, using alphabetical for unlisted items
+      const reordered = []
+      const used = new Set()
+      
+      for(const key of saved){
+        if(folderMap.has(key)){
+          reordered.push(folderMap.get(key))
+          used.add(key)
+        } else if(leafMap.has(key)){
+          reordered.push(leafMap.get(key))
+          used.add(key)
+        }
+      }
+      
+      // Add remaining folders (alphabetically sorted)
+      folders.filter(f => !used.has((f.key||'').split('/').pop() + '/')).sort((a,b) => coll.compare(a.title||'', b.title||'')).forEach(f => reordered.push(f))
+      
+      // Add remaining leaves (by position then alphabetically)
+      leaves.filter(l => {
+        const path = (l._path||'').replace(/^\/?whitepaper\//,'')
+        const key = (path.split('/').pop()||'').replace(/\.md$/,'')
+        return !used.has(key)
+      }).sort((a,b) => {
+        const ap = a.position ?? 999, bp = b.position ?? 999
+        if(ap !== bp) return ap - bp
+        return coll.compare(a.title||'', b.title||'')
+      }).forEach(l => reordered.push(l))
+      
+      nodes.splice(0, nodes.length, ...reordered)
+    } else {
+      // Default behavior: folders first, then leaves (for backward compatibility)
+      folders.sort((a,b) => coll.compare(a.title||'', b.title||''))
+      leaves.sort((a,b) => {
+        const ap = a.position ?? 999, bp = b.position ?? 999
+        if(ap !== bp) return ap - bp
+        return coll.compare(a.title||'', b.title||'')
+      })
+      nodes.splice(0, nodes.length, ...folders, ...leaves)
     }
-
-    // Sort with saved order priority
-    folders.sort((a,b) => {
-      const ia = saved.indexOf(folderKey(a))
-      const ib = saved.indexOf(folderKey(b))
-      if(ia !== -1 || ib !== -1){
-        if(ia === -1) return 1
-        if(ib === -1) return -1
-        return ia - ib
-      }
-      return coll.compare(a.title||'', b.title||'')
-    })
-
-    leaves.sort((a,b) => {
-      const ia = saved.indexOf(fileKey(a))
-      const ib = saved.indexOf(fileKey(b))
-      if(ia !== -1 || ib !== -1){
-        if(ia === -1) return 1
-        if(ib === -1) return -1
-        return ia - ib
-      }
-      const ap = a.position ?? 999, bp = b.position ?? 999
-      if(ap !== bp) return ap - bp
-      return coll.compare(a.title||'', b.title||'')
-    })
-
-    nodes.splice(0, nodes.length, ...folders, ...leaves)
     folders.forEach(f => { if(f.children && f.children.length) sortRec(f.children, f.key) })
   }
   sortRec(root, '')

@@ -1,8 +1,10 @@
 {
   "children": [
-    "test/",
+    "getting-started",
     "principles",
-    "manifesto",
-    "getting-started"
+    "untitled",
+    "playbook",
+    "test/",
+    "zz/"
   ]
 }
