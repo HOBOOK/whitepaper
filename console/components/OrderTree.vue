@@ -141,6 +141,16 @@ watch(() => props.nodeOrder, () => {
   localChildrenOrder.value = null
 }, { deep: true })
 
+// Also watch for node structure changes (folders/leaves)
+watch(() => [props.node.folders?.length, props.node.leaves?.length], () => {
+  localChildrenOrder.value = null
+})
+
+// Watch entire node object for deep changes (tree rebuild)
+watch(() => props.node, () => {
+  localChildrenOrder.value = null
+}, { deep: true })
+
 const initializeLocalOrder = () => {
   if(!localChildrenOrder.value){
     // Build initial order from current folders and leaves
@@ -305,42 +315,46 @@ async function onDropOnItem(itemIdx){
   if(!targetItem) return
   
   try {
-    if(drag.value.type === 'leaf' && drag.value.fromFolder !== props.node.path){
-      // Move file into target folder
-      if(targetItem.type === 'folder'){
+    // Same folder reordering - don't call move API
+    if(drag.value.fromFolder === props.node.path){
+      if(drag.value.type === 'leaf'){
+        // Reorder leaves within same folder
+        initializeLocalOrder()
+        const order = getLocalOrder()
+        if(order){
+          const draggedIdx = drag.value.mixedIndex
+          if(draggedIdx !== undefined && draggedIdx !== itemIdx){
+            const [moved] = order.splice(draggedIdx, 1)
+            order.splice(itemIdx, 0, moved)
+            await saveMixedChildrenOrder()
+          }
+        }
+      } else if(drag.value.type === 'folder'){
+        // Reorder folders within same parent
+        initializeLocalOrder()
+        const order = getLocalOrder()
+        if(order){
+          // If mixedIndex is undefined, find it by matching path
+          let draggedIdx = drag.value.mixedIndex
+          if(draggedIdx === undefined){
+            draggedIdx = mixedChildren.value.findIndex(item => item.path === drag.value.path)
+          }
+          if(draggedIdx !== undefined && draggedIdx !== itemIdx && draggedIdx >= 0){
+            const [moved] = order.splice(draggedIdx, 1)
+            order.splice(itemIdx, 0, moved)
+            await saveMixedChildrenOrder()
+          }
+        }
+      }
+    } else {
+      // Different folder - move to target folder (at end)
+      if(drag.value.type === 'leaf' && targetItem.type === 'folder'){
+        // Move file into target folder (at end, no specific position)
         await moveFile(drag.value.path, targetItem.node.path)
+      } else if(drag.value.type === 'folder' && targetItem.type === 'folder'){
+        // Move folder into target folder (at end, no specific position)
+        await moveFolder(drag.value.path, targetItem.node.path)
       }
-    } else if(drag.value.type === 'leaf' && drag.value.fromFolder === props.node.path){
-      // Reorder leaves within same folder
-      initializeLocalOrder()
-      const order = getLocalOrder()
-      if(order){
-        const draggedIdx = drag.value.mixedIndex
-        if(draggedIdx !== undefined && draggedIdx !== itemIdx){
-          const [moved] = order.splice(draggedIdx, 1)
-          order.splice(itemIdx, 0, moved)
-          await saveMixedChildrenOrder()
-        }
-      }
-    } else if(drag.value.type === 'folder' && drag.value.fromFolder === props.node.path){
-      // Reorder folders within same parent
-      initializeLocalOrder()
-      const order = getLocalOrder()
-      if(order){
-        // If mixedIndex is undefined, find it by matching path
-        let draggedIdx = drag.value.mixedIndex
-        if(draggedIdx === undefined){
-          draggedIdx = mixedChildren.value.findIndex(item => item.path === drag.value.path)
-        }
-        if(draggedIdx !== undefined && draggedIdx !== itemIdx && draggedIdx >= 0){
-          const [moved] = order.splice(draggedIdx, 1)
-          order.splice(itemIdx, 0, moved)
-          await saveMixedChildrenOrder()
-        }
-      }
-    } else if(drag.value.type === 'folder' && drag.value.fromFolder !== props.node.path && targetItem.type === 'folder'){
-      // Move folder into target folder
-      await moveFolder(drag.value.path, targetItem.node.path)
     }
   } finally {
     drag.value = { type: null, fromFolder: '', path: '', leafIndex: -1, folderIndex: -1, mixedIndex: undefined }
@@ -376,10 +390,15 @@ async function onDropBetweenItems(insertIdx){
           await saveMixedChildrenOrder()
         }
       }
-    } else if(drag.value.type === 'folder'){
-      // Moving folder from another parent to this folder at specific position
-      // First move the folder, then reorder
-      await moveFolder(drag.value.path, props.node.path)
+    } else {
+      // Moving item from another folder to this folder at specific position
+      if(drag.value.type === 'leaf'){
+        // Move file to this folder with position
+        await moveFile(drag.value.path, props.node.path, insertIdx)
+      } else if(drag.value.type === 'folder'){
+        // Move folder to this folder at specific position
+        await moveFolder(drag.value.path, props.node.path, insertIdx)
+      }
     }
   } finally {
     drag.value = { type: null, fromFolder: '', path: '', leafIndex: -1, folderIndex: -1, mixedIndex: undefined }
@@ -415,7 +434,7 @@ async function onDropIntoFolder(){
       await moveFolder(drag.value.path, props.node.path)
     }
   } finally {
-    drag.value = { type: null, fromFolder: '', path: '', leafIndex: -1, folderIndex: -1 }
+    drag.value = { type: null, fromFolder: '', path: '', leafIndex: -1, folderIndex: -1, mixedIndex: undefined }
   }
 }
 
@@ -431,7 +450,7 @@ async function onDropToParent(){
       await moveFolder(drag.value.path, parent)
     }
   } finally {
-    drag.value = { type: null, fromFolder: '', path: '', leafIndex: -1, folderIndex: -1 }
+    drag.value = { type: null, fromFolder: '', path: '', leafIndex: -1, folderIndex: -1, mixedIndex: undefined }
   }
 }
 
@@ -461,7 +480,8 @@ async function saveMixedChildrenOrder(){
     console.error('[OrderTree] Failed to save order:', e)
     return
   }
-  emit('reordered')
+  // For reordering (same folder), DON'T emit reordered - just save the order
+  // emit('reordered') would cause full tree reload and page refresh
 }
 
 function authHeader(){
@@ -470,13 +490,51 @@ function authHeader(){
   return {}
 }
 
-async function moveFile(from, toFolder){
-  await $fetch('/api/content/move', { method:'POST', body:{ from, toFolder }, headers: authHeader() })
-  // Refresh nav tree in background without blocking UI
-  refreshNuxtData('navTree').catch(e => console.error('[OrderTree] Failed to refresh navTree:', e))
-  emit('reordered')
+async function moveFile(from, toFolder, insertIdx = undefined){
+  // Prevent moving file to the same folder (no-op)
+  const fromFolder = from.split('/').slice(0, -1).join('/')
+  if(fromFolder === toFolder){
+    console.log('[OrderTree] File already in target folder, skipping move')
+    return
+  }
+  
+  try {
+    await $fetch('/api/content/move', { method:'POST', body:{ from, toFolder }, headers: authHeader() })
+    
+    // If insertIdx is provided, update the order in target folder
+    if(insertIdx !== undefined){
+      initializeLocalOrder()
+      const order = getLocalOrder()
+      if(order){
+        // Add moved file at the specified position
+        const fileName = from.split('/').pop() || ''
+        const newPath = toFolder ? `${toFolder}/${fileName}` : fileName
+        
+        // Remove if already exists (shouldn't happen but just in case)
+        const existingIdx = order.findIndex(item => item.path === newPath)
+        if(existingIdx >= 0){
+          order.splice(existingIdx, 1)
+        }
+        
+        // Insert at specified position
+        order.splice(insertIdx, 0, { type: 'leaf', path: newPath })
+        
+        // Save the new order
+        await saveMixedChildrenOrder()
+      }
+    }
+    
+    // Trigger full tree refresh by emitting reordered
+    // This will reload folder orders from server
+    emit('reordered', { type: 'move' })
+  } catch (e) {
+    console.error('[OrderTree] Failed to move file:', e)
+    // Show error to user
+    const message = e?.data?.statusMessage || e?.message || 'Failed to move file'
+    alert(`Error: ${message}`)
+  }
 }
-async function moveFolder(fromFolderPath, toFolder){
+async function moveFolder(fromFolderPath, toFolder, insertIdx = undefined){
   // Prevent moving folder to the same parent (no-op)
   const fromParent = parentPath(fromFolderPath)
   if(fromParent === toFolder){
@@ -484,34 +542,42 @@ async function moveFolder(fromFolderPath, toFolder){
     return
   }
   
-  await $fetch('/api/content/move-folder', { method:'POST', body:{ from: fromFolderPath, toFolder }, headers: authHeader() })
-  // Optimistic update: remove folder from old parent and add under new parent
-  const seg = (fromFolderPath.split('/').pop() || '')
-  removeFolderFromTree(rootRef.value, fromFolderPath)
-  addFolderToTree(rootRef.value, toFolder, seg)
-  // Refresh nav tree in background without blocking UI
-  refreshNuxtData('navTree').catch(e => console.error('[OrderTree] Failed to refresh navTree:', e))
-  emit('reordered')
-  isDragOverFolder.value = -1
-}
-
-const rootRef = inject('orderRootRef', ref(null))
-
-function removeFolderFromTree(node, path){
-  if(!node) return false
-  const idx = (node.folders||[]).findIndex(f => f.path === path)
-  if(idx >= 0){ node.folders.splice(idx,1); return true }
-  for(const f of node.folders||[]){ if(removeFolderFromTree(f, path)) return true }
-  return false
-}
-function addFolderToTree(node, parentPath, seg){
-  if((node.path||'') === (parentPath||'')){
-    const newNode = { name: seg, path: parentPath ? `${parentPath}/${seg}` : seg, folders: [], leaves: [] }
-    node.folders.push(newNode)
-    return true
+  try {
+    await $fetch('/api/content/move-folder', { method:'POST', body:{ from: fromFolderPath, toFolder }, headers: authHeader() })
+    
+    // If insertIdx is provided, update the order in target folder
+    if(insertIdx !== undefined){
+      initializeLocalOrder()
+      const order = getLocalOrder()
+      if(order){
+        // Add moved folder at the specified position
+        const folderName = fromFolderPath.split('/').pop() || ''
+        const newPath = toFolder ? `${toFolder}/${folderName}` : folderName
+        
+        // Remove if already exists (shouldn't happen but just in case)
+        const existingIdx = order.findIndex(item => item.path === newPath)
+        if(existingIdx >= 0){
+          order.splice(existingIdx, 1)
+        }
+        
+        // Insert at specified position
+        order.splice(insertIdx, 0, { type: 'folder', path: newPath })
+        
+        // Save the new order
+        await saveMixedChildrenOrder()
+      }
+    }
+    
+    // Trigger full tree refresh by emitting reordered
+    // This will reload folder orders from server
+    emit('reordered', { type: 'move' })
+  } catch (e) {
+    console.error('[OrderTree] Failed to move folder:', e)
+    // Show error to user
+    const message = e?.data?.statusMessage || e?.message || 'Failed to move folder'
+    alert(`Error: ${message}`)
   }
-  for(const f of node.folders||[]){ if(addFolderToTree(f, parentPath, seg)) return true }
-  return false
+  isDragOverFolder.value = -1
 }
 
 // Helpers

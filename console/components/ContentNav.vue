@@ -44,7 +44,9 @@
 import AppIcon from '@/components/AppIcon.vue'
 import { refreshNuxtData } from '#app'
 import { useAdmin } from '@/composables/useAdmin'
-const { admin, token } = useAdmin()
+const { admin: adminState, token: tokenState } = useAdmin()
+const admin = computed(() => adminState.value)
+const token = computed(() => tokenState.value)
 
 const props = defineProps({ items: { type: Array, default: () => [] }, base: { type: String, default: '' }, depth: { type: Number, default: 0 } })
 const route = useRoute()

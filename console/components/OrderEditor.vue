@@ -1,8 +1,9 @@
 <template>
   <div>
-    <div v-if="!admin" class="text-sm text-red-600">{{ $t('order.admin_only') }}</div>
+    <ClientOnly>
+      <div v-if="!admin" class="text-sm text-red-600">{{ $t('order.admin_only') }}</div>
 
-    <div v-else>
+      <div v-else>
       <div v-if="loading" class="text-sm text-gray-500">{{ $t('settings.loading') }}</div>
       <div v-else>
         <div class="text-xs text-gray-500 mb-2">{{ $t('order.drag_hint') }}</div>
@@ -23,6 +24,7 @@
         <div v-if="saved" class="text-xs text-green-600 mt-2">{{ $t('settings.saved') }}</div>
       </div>
     </div>
+    </ClientOnly>
 
     <!-- Create Folder Modal -->
     <transition name="fade">
@@ -58,8 +60,12 @@ import AppIcon from '@/components/AppIcon.vue'
 import OrderTree from '@/components/OrderTree.vue'
 import { useAdmin } from '@/composables/useAdmin'
 import { refreshNuxtData } from '#app'
-const { admin, token } = useAdmin()
+const { admin: adminState, token: tokenState } = useAdmin()
 const { t } = useI18n()
+
+// Create computed properties to ensure reactivity
+const admin = computed(() => adminState.value)
+const token = computed(() => tokenState.value)
 
 const loading = ref(true)
 const saving = ref(false)
@@ -68,7 +74,6 @@ const error = ref('')
 
 const root = reactive({ name: '', path: '', folders: [], leaves: [] })
 const folderOrders = ref({})
-provide('orderRootRef', ref(root))
 
 const relFromPath = (p) => (p || '').replace(/^\/?whitepaper\//, '').replace(/^\//, '')
 const folderOf = (rel) => (rel.split('/').slice(0,-1).join('/') || '')
@@ -83,12 +88,13 @@ function ensureFolderNode(parent, name, path){
   return node
 }
 
-function buildTree(docs, folderOrders = {}){
-  root.folders = []
-  root.leaves = []
+function buildTree(docs, folderOrders = {}, targetRoot = null){
+  const tgt = targetRoot || root
+  tgt.folders = []
+  tgt.leaves = []
   for(const d of docs){
     const segs = (d.folder || '').split('/').filter(Boolean)
-    let cur = root
+    let cur = tgt
     let acc = ''
     for(const seg of segs){
       acc += (acc ? '/' : '') + seg
@@ -113,6 +119,7 @@ function buildTree(docs, folderOrders = {}){
       }))
       
       // Reorder according to saved order
+      // Only include items that actually exist
       const reordered = []
       const used = new Set()
       
@@ -124,6 +131,8 @@ function buildTree(docs, folderOrders = {}){
           reordered.push(leafMap.get(key))
           used.add(key)
         }
+        // If key doesn't exist in folderMap or leafMap, skip it
+        // This prevents showing files/folders that were deleted
       }
       
       // Add remaining folders (alphabetically)
@@ -163,7 +172,7 @@ function buildTree(docs, folderOrders = {}){
       sortRec(f, f.path || '')
     }
   }
-  sortRec(root, '')
+  sortRec(tgt, '')
 }
 
 async function load(){
@@ -189,30 +198,56 @@ async function load(){
 }
 
 function reload(){ load(); saved.value = false }
+
+async function getDocumentsFromServer() {
+  try {
+    const res = await $fetch('/api/content/list')
+    return res?.docs || []
+  } catch (e) {
+    console.error('Failed to get documents from server:', e)
+    return []
+  }
+}
+
 async function onReordered(){
   saved.value = true
   try {
-    // Load updated order preferences
+    // Load documents from server (doesn't trigger Nuxt cache invalidation)
+    const docs = await getDocumentsFromServer()
+    
+    // Load folder order preferences
     const res = await $fetch('/api/content/folder-order')
-    folderOrders.value = res?.orders || {}
+    folderOrders.value = { ...res?.orders || {} }
     
-    // Rebuild tree with new order
-    const docs = await getExistingDocs()
+    // Cache the new docs
+    cachedDocs = docs
     
-    // Create a new root object to trigger prop updates in OrderTree
+    // Wait for props to update in child components
+    await nextTick()
+    
+    // Rebuild tree with new documents and orders
     const newRoot = { name: '', path: '', folders: [], leaves: [] }
-    root.folders = []
-    root.leaves = []
+    buildTree(docs, folderOrders.value, newRoot)
     
-    buildTree(docs, folderOrders.value)
+    // Replace root content completely to trigger deep reactivity
+    root.folders = newRoot.folders
+    root.leaves = newRoot.leaves
+    
+    // Wait for UI to render and child components to detect changes
+    await nextTick()
+    await nextTick()
   } catch (e) {
     console.error('onReordered error:', e)
+    error.value = e.message
   }
   
-  // Refresh sidebar nav in background
-  refreshNuxtData('navTree').catch(e => console.error('Failed to refresh navTree:', e))
+  // Refresh sidebar nav in background (non-blocking)
+  // 사이드바 네비 갱신은 백그라운드에서만 실행 - UI 새로고침 없음
+  refreshNuxtData('navTree').catch(() => {
+    // 사이드바 갱신 실패는 무시 - 관리자 모드 유지 중요
+  })
   
-  setTimeout(() => saved.value = false, 1000)
+  setTimeout(() => saved.value = false, 1500)
 }
 
 // Store docs for quick rebuild

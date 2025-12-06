@@ -140,7 +140,9 @@ import { ContentRenderer } from '#components'
 import TocCard from '@/components/TocCard.vue'
 import { useAdmin } from '@/composables/useAdmin'
 const route = useRoute()
-const { admin, token } = useAdmin()
+const { admin: adminState, token: tokenState } = useAdmin()
+const admin = computed(() => adminState.value)
+const token = computed(() => tokenState.value)
 const { t, locale: i18nLocale } = useI18n()
 
 let mdRenderer = null

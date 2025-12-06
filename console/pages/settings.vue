@@ -5,12 +5,14 @@
         <h1 class="text-lg font-semibold">{{ $t('settings.title') }}</h1>
       </div>
 
-      <SegmentedTabs v-model="tab" :items="tabsI18n" class="mb-4" />
+      <ClientOnly>
+        <SegmentedTabs v-model="tab" :items="tabsI18n" class="mb-4" />
 
-      <div v-if="tab==='order'">
-        <OrderEditor />
-      </div>
-      <div v-else>
+        <div v-if="tab==='order'">
+          <OrderEditor />
+        </div>
+      </ClientOnly>
+      <div v-if="tab!=='order'">
         <div class="space-y-5">
           <section>
             <div class="text-sm font-semibold mb-2">{{ $t('settings.theme') }}</div>

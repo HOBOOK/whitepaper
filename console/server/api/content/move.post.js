@@ -21,6 +21,20 @@ export default defineEventHandler(async (event) => {
   const destRel = toFolder ? `${toFolder}/${fileName}` : `${fileName}`
   const dest = resolve(process.cwd(), 'content', 'whitepaper', `${destRel}.md`)
 
+  // Prevent no-op move (same source and destination)
+  if(src === dest){
+    console.log('[move] No-op: source and destination are the same')
+    return { success: true }
+  }
+
+  // Check if source file exists
+  try {
+    await fs.access(src)
+  } catch (e) {
+    console.error(`[move] Source file not found: ${src}`)
+    throw createError({ statusCode: 404, statusMessage: `Source file not found: ${from}.md` })
+  }
+
   // Ensure destination directory exists
   await fs.mkdir(dirname(dest), { recursive: true })
 

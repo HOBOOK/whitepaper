@@ -58,7 +58,9 @@
               <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-800 flex flex-col flex-1 min-h-0">
                 <div class="text-[10px] uppercase tracking-wide text-gray-500 mb-1 px-3">{{ $t('nav.documents') }}</div>
                 <div class="px-2 pr-3 flex-1 min-h-0 overflow-y-auto overscroll-contain text-sm leading-snug">
-                  <content-nav :items="tree" />
+                  <ClientOnly>
+                    <content-nav :items="tree" />
+                  </ClientOnly>
                 </div>
               </div>
               <div class="py-1 my-3 mx-3 card border-gray-200 dark:border-gray-800">
@@ -138,7 +140,9 @@ import { useAdmin } from '@/composables/useAdmin'
 const color = useColorMode()
 const route = useRoute()
 const drawer = ref(false)
-const { admin, token, enable } = useAdmin()
+const { admin: adminState, token: tokenState, enable } = useAdmin()
+const admin = computed(() => adminState.value)
+const token = computed(() => tokenState.value)
 const adminModal = ref(false)
 const pass = ref('')
 const error = ref('')

@@ -46,7 +46,9 @@
 import AppIcon from '@/components/AppIcon.vue'
 import { useAdmin } from '@/composables/useAdmin'
 import { refreshNuxtData } from '#app'
-const { admin, token } = useAdmin()
+const { admin: adminState, token: tokenState } = useAdmin()
+const admin = computed(() => adminState.value)
+const token = computed(() => tokenState.value)
 const { t } = useI18n()
 
 const loading = ref(true)

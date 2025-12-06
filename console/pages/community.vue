@@ -118,7 +118,9 @@
 <script setup>
 useHead({ title: 'Community' })
 import { useAdmin } from '@/composables/useAdmin'
-const { admin, token } = useAdmin()
+const { admin: adminState, token: tokenState } = useAdmin()
+const admin = computed(() => adminState.value)
+const token = computed(() => tokenState.value)
 const { t } = useI18n()
 
 const q = ref('')
@@ -138,7 +140,7 @@ const editCid = ref('')
 const cEdit = ref('')
 const myIp = ref('')
 
-function headers(){ return (admin?.value && token?.value) ? { 'x-admin-pass': token.value } : {} }
+function headers(){ return (admin.value && token.value) ? { 'x-admin-pass': token.value } : {} }
 
 async function loadPosts(){
   try{
@@ -202,7 +204,7 @@ async function delPost(p){
 }
 
 function canManageComment(c){
-  if(admin?.value) return true
+  if(admin.value) return true
   return c.creatorIp && myIp.value && c.creatorIp === myIp.value
 }
 function startEditComment(c){ editCid.value = c.id; cEdit.value = c.text }
@@ -262,7 +264,7 @@ onMounted(async () => {
 })
 
 function canManagePost(p){
-  if(admin?.value) return true
+  if(admin.value) return true
   return p && p.creatorIp && myIp.value && p.creatorIp === myIp.value
 }
 </script>
