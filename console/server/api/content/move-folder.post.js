@@ -13,9 +13,13 @@ export default defineEventHandler(async (event) => {
   if(!from){
     throw createError({ statusCode: 400, statusMessage: 'Missing from path' })
   }
-  // prevent moving folder into itself or its descendant
-  if(toFolder && (toFolder === from || toFolder.startsWith(from + '/'))){
-    throw createError({ statusCode: 400, statusMessage: 'Invalid target (self/descendant)' })
+  
+  // Get parent of from
+  const fromParent = from.split('/').slice(0, -1).join('/') || ''
+  
+  // prevent moving folder into itself or its descendant or same parent
+  if(toFolder && (toFolder === from || toFolder.startsWith(from + '/') || toFolder === fromParent)){
+    throw createError({ statusCode: 400, statusMessage: 'Invalid target (self/descendant/same)' })
   }
 
   const src = resolve(process.cwd(), 'content', 'whitepaper', from)

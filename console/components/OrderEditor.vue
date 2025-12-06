@@ -175,6 +175,7 @@ async function load(){
       const rel = relFromPath(n._path||'')
       return { path: rel, title: n.title||'', position: n.position||999, folder: folderOf(rel) }
     })
+    cachedDocs = mapped
     
     // Load folder order preferences
     try {
@@ -190,11 +191,34 @@ async function load(){
 function reload(){ load(); saved.value = false }
 async function onReordered(){
   saved.value = true
-  await Promise.all([
-    load(), // reflect immediately in order editor
-    refreshNuxtData('navTree') // refresh sidebar navigation
-  ])
+  try {
+    // Load updated order preferences
+    const res = await $fetch('/api/content/folder-order')
+    folderOrders.value = res?.orders || {}
+    
+    // Rebuild tree with new order
+    const docs = await getExistingDocs()
+    
+    // Create a new root object to trigger prop updates in OrderTree
+    const newRoot = { name: '', path: '', folders: [], leaves: [] }
+    root.folders = []
+    root.leaves = []
+    
+    buildTree(docs, folderOrders.value)
+  } catch (e) {
+    console.error('onReordered error:', e)
+  }
+  
+  // Refresh sidebar nav in background
+  refreshNuxtData('navTree').catch(e => console.error('Failed to refresh navTree:', e))
+  
   setTimeout(() => saved.value = false, 1000)
+}
+
+// Store docs for quick rebuild
+let cachedDocs = []
+function getExistingDocs(){
+  return cachedDocs
 }
 
 // Refs used by folder creation modal

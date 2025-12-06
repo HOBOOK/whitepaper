@@ -136,6 +136,11 @@ const getLocalOrder = () => {
   return localChildrenOrder.value
 }
 
+// Watch nodeOrder changes to reset local cache
+watch(() => props.nodeOrder, () => {
+  localChildrenOrder.value = null
+}, { deep: true })
+
 const initializeLocalOrder = () => {
   if(!localChildrenOrder.value){
     // Build initial order from current folders and leaves
@@ -268,7 +273,7 @@ function onDragOverFolder(idx){
 
 function onDragStartHeader(event){
   event.stopPropagation()
-  drag.value = { type: 'folder', fromFolder: parentPath(props.node.path), path: props.node.path, leafIndex: -1, folderIndex: -1 }
+  drag.value = { type: 'folder', fromFolder: parentPath(props.node.path), path: props.node.path, leafIndex: -1, folderIndex: -1, mixedIndex: undefined }
 }
 
 function onDragStartItem(itemIdx){
@@ -322,8 +327,12 @@ async function onDropOnItem(itemIdx){
       initializeLocalOrder()
       const order = getLocalOrder()
       if(order){
-        const draggedIdx = drag.value.mixedIndex
-        if(draggedIdx !== undefined && draggedIdx !== itemIdx){
+        // If mixedIndex is undefined, find it by matching path
+        let draggedIdx = drag.value.mixedIndex
+        if(draggedIdx === undefined){
+          draggedIdx = mixedChildren.value.findIndex(item => item.path === drag.value.path)
+        }
+        if(draggedIdx !== undefined && draggedIdx !== itemIdx && draggedIdx >= 0){
           const [moved] = order.splice(draggedIdx, 1)
           order.splice(itemIdx, 0, moved)
           await saveMixedChildrenOrder()
@@ -349,8 +358,12 @@ async function onDropBetweenItems(insertIdx){
       initializeLocalOrder()
       const order = getLocalOrder()
       if(order){
-        const draggedIdx = drag.value.mixedIndex
-        if(draggedIdx !== undefined && draggedIdx !== insertIdx && draggedIdx !== insertIdx - 1){
+        // If mixedIndex is undefined, find it by matching path
+        let draggedIdx = drag.value.mixedIndex
+        if(draggedIdx === undefined){
+          draggedIdx = mixedChildren.value.findIndex(item => item.path === drag.value.path)
+        }
+        if(draggedIdx !== undefined && draggedIdx !== insertIdx && draggedIdx !== insertIdx - 1 && draggedIdx >= 0){
           const [moved] = order.splice(draggedIdx, 1)
           
           // Calculate correct insert position
@@ -398,12 +411,6 @@ async function onDropIntoFolder(){
   try{
     if(drag.value.type === 'leaf'){
       await moveFile(drag.value.path, props.node.path)
-      // After moving file, save mixed order in source folder
-      if(drag.value.fromFolder && drag.value.fromFolder !== props.node.path){
-        // Reload to get updated structure
-        await refreshNuxtData('navTree')
-        emit('reordered')
-      }
     }else if(drag.value.type === 'folder'){
       await moveFolder(drag.value.path, props.node.path)
     }
@@ -440,19 +447,16 @@ async function saveMixedChildrenOrder(){
   })
   
   const folderPath = props.node.path || ''
-  console.log('[OrderTree] Saving order for folder:', folderPath, 'order:', orderArray)
   
   try {
-    const result = await $fetch('/api/content/folder-order', { 
+    await $fetch('/api/content/folder-order', { 
       method:'POST', 
       body:{ folder: folderPath, order: orderArray }, 
       headers: authHeader() 
     })
-    console.log('[OrderTree] Save result:', result)
     
-    // Ensure refresh completes before emitting
-    await refreshNuxtData('navTree')
-    console.log('[OrderTree] refreshNuxtData completed')
+    // Refresh nav tree in background without blocking UI
+    refreshNuxtData('navTree').catch(e => console.error('[OrderTree] Failed to refresh navTree:', e))
   } catch (e) {
     console.error('[OrderTree] Failed to save order:', e)
     return
@@ -468,16 +472,25 @@ function authHeader(){
 
 async function moveFile(from, toFolder){
   await $fetch('/api/content/move', { method:'POST', body:{ from, toFolder }, headers: authHeader() })
-  await refreshNuxtData('navTree')
+  // Refresh nav tree in background without blocking UI
+  refreshNuxtData('navTree').catch(e => console.error('[OrderTree] Failed to refresh navTree:', e))
   emit('reordered')
 }
 async function moveFolder(fromFolderPath, toFolder){
+  // Prevent moving folder to the same parent (no-op)
+  const fromParent = parentPath(fromFolderPath)
+  if(fromParent === toFolder){
+    console.log('[OrderTree] Folder already in target parent, skipping move')
+    return
+  }
+  
   await $fetch('/api/content/move-folder', { method:'POST', body:{ from: fromFolderPath, toFolder }, headers: authHeader() })
   // Optimistic update: remove folder from old parent and add under new parent
   const seg = (fromFolderPath.split('/').pop() || '')
   removeFolderFromTree(rootRef.value, fromFolderPath)
   addFolderToTree(rootRef.value, toFolder, seg)
-  await refreshNuxtData('navTree')
+  // Refresh nav tree in background without blocking UI
+  refreshNuxtData('navTree').catch(e => console.error('[OrderTree] Failed to refresh navTree:', e))
   emit('reordered')
   isDragOverFolder.value = -1
 }
